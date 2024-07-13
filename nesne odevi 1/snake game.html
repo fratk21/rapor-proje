@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Snake Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #oyunAlani {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #333;
+            background-color: #fff;
+        }
+        #tuşlar {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            grid-gap: 5px;
+            margin-top: 10px;
+        }
+        .tuş {
+            background-color: #3498db;
+            color: #fff;
+            font-size: 20px;
+            padding: 10px 20px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .tuş:nth-child(1) {
+            grid-column: 2;
+            grid-row: 1;
+        }
+        .tuş:nth-child(2) {
+            grid-column: 1;
+            grid-row: 2;
+        }
+        .tuş:nth-child(3) {
+            grid-column: 2;
+            grid-row: 2;
+        }
+        .tuş:nth-child(4) {
+            grid-column: 3;
+            grid-row: 2;
+        }
+        .tuş:nth-child(5) {
+            grid-column: 2;
+            grid-row: 3;
+        }
+        #skor {
+            margin-top: 10px;
+            font-size: 24px;
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="oyunAlani" width="400" height="400"></canvas>
+    <div id="tuşlar">
+        <div class="tuş" id="yukari">Up</div>
+        <div class="tuş" id="sol">Left</div>
+        <div class="tuş" id="asagi">Down</div>
+        <div class="tuş" id="sag">Right</div>
+        <div class="tuş" id="yeniden">Restart</div>
+    </div>
+    <div id="skor">Score: 0</div>
+    <script>
+        const oyunAlani = document.getElementById("oyunAlani");
+        const context = oyunAlani.getContext("2d");
+        const hucreBoyutu = 20;
+        let yilan = [{ x: 10, y: 10 }];
+        let yem = { x: 5, y: 5 };
+        let yilanUzunlugu = 1;
+        let yilanYonu = "sağ";
+        let oyunBitti = false;
+        let hareketZamani = 150;
+        let skor = 0;
+        const skorElementi = document.getElementById("skor");
+
+        function yilanHareketEt() {
+            if (oyunBitti) return;
+
+            let yeniKafa = { ...yilan[0] };
+
+            if (yilanYonu === "sağ") {
+                yeniKafa.x++;
+            } else if (yilanYonu === "sol") {
+                yeniKafa.x--;
+            } else if (yilanYonu === "yukarı") {
+                yeniKafa.y--;
+            } else if (yilanYonu === "aşağı") {
+                yeniKafa.y++;
+            }
+
+            yilan.unshift(yeniKafa);
+
+            if (yeniKafa.x === yem.x && yeniKafa.y === yem.y) {
+                yilanUzunlugu++;
+                skor++;
+                skorElementi.innerText = "Skor: " + skor;
+                yem.x = Math.floor(Math.random() * (oyunAlani.width / hucreBoyutu));
+                yem.y = Math.floor(Math.random() * (oyunAlani.height / hucreBoyutu));
+            }
+
+            if (yilan.length > yilanUzunlugu) {
+                yilan.pop();
+            }
+        }
+
+        function oyunCiz() {
+            context.clearRect(0, 0, oyunAlani.width, oyunAlani.height);
+
+            if (oyunBitti) {
+                context.fillStyle = "red";
+                context.font = "30px Arial";
+                context.fillText("Oyun Bitti!", 150, 200);
+                context.font = "16px Arial";
+                context.fillText("Oyunu yeniden başlatmak için 'Yeniden Başlat' tuşuna basın.", 50, 230);
+                return;
+            }
+
+            yilan.forEach(hucre => {
+                context.fillStyle = "green";
+                context.fillRect(hucre.x * hucreBoyutu, hucre.y * hucreBoyutu, hucreBoyutu, hucreBoyutu);
+            });
+
+            context.fillStyle = "red";
+            context.fillRect(yem.x * hucreBoyutu, yem.y * hucreBoyutu, hucreBoyutu, hucreBoyutu);
+        }
+
+        function oyunKontrol() {
+            if (oyunBitti) return;
+
+            if (yilan[0].x < 0 || yilan[0].x >= oyunAlani.width / hucreBoyutu || yilan[0].y < 0 || yilan[0].y >= oyunAlani.height / hucreBoyutu) {
+                oyunBitti = true;
+            }
+
+            for (let i = 1; i < yilan.length; i++) {
+                if (yilan[i].x === yilan[0].x && yilan[i].y === yilan[0].y) {
+                    oyunBitti = true;
+                }
+            }
+        }
+
+        function oyunBaslat() {
+            oyunCiz();
+            yilanHareketEt();
+            oyunKontrol();
+            if (!oyunBitti) {
+                setTimeout(oyunBaslat, hareketZamani);
+            }
+        }
+
+        document.getElementById("yukari").addEventListener("click", function() {
+            if (yilanYonu !== "aşağı") {
+                yilanYonu = "yukarı";
+            }
+        });
+
+        document.getElementById("sol").addEventListener("click", function() {
+            if (yilanYonu !== "sağ") {
+                yilanYonu = "sol";
+            }
+        });
+
+        document.getElementById("asagi").addEventListener("click", function() {
+            if (yilanYonu !== "yukarı") {
+                yilanYonu = "aşağı";
+            }
+        });
+
+        document.getElementById("sag").addEventListener("click", function() {
+            if (yilanYonu !== "sol") {
+                yilanYonu = "sağ";
+            }
+        });
+
+        document.getElementById("yeniden").addEventListener("click", function() {
+            if (oyunBitti) {
+                // Oyunu yeniden başlat
+                yilan = [{ x: 10, y: 10 }];
+                yem = { x: 5, y: 5 };
+                yilanUzunlugu = 1;
+                yilanYonu = "sağ";
+                oyunBitti = false;
+                skor = 0;
+                skorElementi.innerText = "Skor: " + skor;
+                oyunBaslat();
+            }
+        });
+
+        oyunBaslat();
+    </script>
+</body>
+</html>
